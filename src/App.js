@@ -1,69 +1,186 @@
-import axios from "axios";
-import "bootstrap/dist/css/bootstrap.min.css"
-import { useEffect, useState } from "react";
+import React, {useState, useEffect} from 'react';
 import './App.css';
+import {AiOutlineDelete} from 'react-icons/ai';
+import {BsCheckLg} from 'react-icons/bs';
+function App () {
+  const [allTodos, setAllTodos] = useState ([]);
+  const [newTodoTitle, setNewTodoTitle] = useState ('');
+  const [newDescription, setNewDescription] = useState ('');
+  const [completedTodos, setCompletedTodos] = useState ([]);
+  const [isCompletedScreen, setIsCompletedScreen] = useState (false);
 
-function App() {
+  const handleAddNewToDo = () => {
+    let newToDoObj = {
+      title: newTodoTitle,
+      description: newDescription,
+    };
+    // console.log (newToDoObj);
+    let updatedTodoArr = [...allTodos];
+    updatedTodoArr.push (newToDoObj);
+    // console.log (updatedTodoArr);
+    setAllTodos (updatedTodoArr);
+    localStorage.setItem ('todolist', JSON.stringify (updatedTodoArr));
+    setNewDescription ('');
+    setNewTodoTitle ('');
+  };
 
+  useEffect (() => {
+    let savedTodos = JSON.parse (localStorage.getItem ('todolist'));
+    let savedCompletedToDos = JSON.parse (
+      localStorage.getItem ('completedTodos')
+    );
+    if (savedTodos) {
+      setAllTodos (savedTodos);
+    }
 
-  const apiKey = "f56f24967aaf51182d1d4df628297c6d"
-  const [inputCity, setInputCity] = useState("")
-  const [data, setData] = useState({})
+    if (savedCompletedToDos) {
+      setCompletedTodos (savedCompletedToDos);
+    }
+  }, []);
 
+  const handleToDoDelete = index => {
+    let reducedTodos = [...allTodos];
+    reducedTodos.splice (index,1);
+    // console.log (index);
 
-  const getWetherDetails = (cityName) => {
-    if (!cityName) return
-    const apiURL = "https://api.openweathermap.org/data/2.5/weather?q=" + cityName + "&appid=" + apiKey
-    axios.get(apiURL).then((res) => {
-      console.log("response", res.data)
-      setData(res.data)
-    }).catch((err) => {
-      console.log("err", err)
-    })
-  }
+    // console.log (reducedTodos);
+    localStorage.setItem ('todolist', JSON.stringify (reducedTodos));
+    setAllTodos (reducedTodos);
+  };
 
-  const handleChangeInput = (e) => {
-    console.log("value", e.target.value)
-    setInputCity(e.target.value)
-  }
+  const handleCompletedTodoDelete = index => {
+    let reducedCompletedTodos = [...completedTodos];
+    reducedCompletedTodos.splice (index);
+    // console.log (reducedCompletedTodos);
+    localStorage.setItem (
+      'completedTodos',
+      JSON.stringify (reducedCompletedTodos)
+    );
+    setCompletedTodos (reducedCompletedTodos);
+  };
 
-  const handleSearch = () => {
-    getWetherDetails(inputCity)
-  }
+  const handleComplete = index => {
+    const date = new Date ();
+    var dd = date.getDate ();
+    var mm = date.getMonth () + 1;
+    var yyyy = date.getFullYear ();
+    var hh = date.getHours ();
+    var minutes = date.getMinutes ();
+    var ss = date.getSeconds ();
+    var finalDate =
+      dd + '-' + mm + '-' + yyyy + ' at ' + hh + ':' + minutes + ':' + ss;
 
+    let filteredTodo = {
+      ...allTodos[index],
+      completedOn: finalDate,
+    };
+
+    // console.log (filteredTodo);
+
+    let updatedCompletedList = [...completedTodos, filteredTodo];
+    console.log (updatedCompletedList);
+    setCompletedTodos (updatedCompletedList);
+    localStorage.setItem (
+      'completedTodos',
+      JSON.stringify (updatedCompletedList)
+    );
+    // console.log (index);
+
+    handleToDoDelete (index);
+  };
 
   return (
-    <div className="col-md-12">
-      <div className="wetherBg">
-        <h1 className="heading">Weather App</h1>
+    <div className="App">
+      <h1>My Todos</h1>
 
-        <div className="d-grid gap-3 col-4 mt-4">
-          <input type="text" className="form-control"
-            value={inputCity}
-            onChange={handleChangeInput} />
-          <button className="btn btn-primary" type="button"
-            onClick={handleSearch}
-          >Search</button>
-        </div>
-      </div>
+      <div className="todo-wrapper">
 
-      {Object.keys(data).length > 0 &&
-        <div className="col-md-12 text-center mt-5">
-
-          <div className="shadow rounded wetherResultBox">
-            <img className="weathorIcon"
-              src="https://i.pinimg.com/originals/77/0b/80/770b805d5c99c7931366c2e84e88f251.png" />
-
-            <h5 className="weathorCity">
-              {data?.name}
-            </h5>
-            <h6 className="weathorTemp">{((data?.main?.temp) - 273.15).toFixed(2)}°C</h6>
-            <h6 className="weatherTEMP">{((data?.weather?.main))}</h6>
-            
+        <div className="todo-input">
+          <div className="todo-input-item">
+            <label>Title:</label>
+            <input
+              type="text"
+              value={newTodoTitle}
+              onChange={e => setNewTodoTitle (e.target.value)}
+              placeholder="What's the title of your To Do?"
+            />
+          </div>
+          <div className="todo-input-item">
+            <label>Description:</label>
+            <input
+              type="text"
+              value={newDescription}
+              onChange={e => setNewDescription (e.target.value)}
+              placeholder="What's the description of your To Do?"
+            />
+          </div>
+          <div className="todo-input-item">
+            <button
+              className="primary-btn"
+              type="button"
+              onClick={handleAddNewToDo}
+            >
+              Add
+            </button>
           </div>
         </div>
-      }
+        <div className="btn-area">
+          <button
+            className={`secondaryBtn ${isCompletedScreen === false && 'active'}`}
+            onClick={() => setIsCompletedScreen (false)}
+          >
+            To Do
+          </button>
+          <button
+            className={`secondaryBtn ${isCompletedScreen === true && 'active'}`}
+            onClick={() => setIsCompletedScreen (true)}
+          >
+            Completed
+          </button>
+        </div>
+        <div className="todo-list">
 
+          {isCompletedScreen === false &&
+            allTodos.map ((item, index) => (
+              <div className="todo-list-item" key={index}>
+                <div>
+                  <h3>{item.title}</h3>
+                  <p>{item.description}</p>
+
+                </div>
+                <div>
+                  <AiOutlineDelete
+                    title="Delete?"
+                    className="icon"
+                    onClick={() => handleToDoDelete (index)}
+                  />
+                  <BsCheckLg
+                    title="Completed?"
+                    className=" check-icon"
+                    onClick={() => handleComplete (index)}
+                  />
+                </div>
+              </div>
+            ))}
+
+          {isCompletedScreen === true &&
+            completedTodos.map ((item, index) => (
+              <div className="todo-list-item" key={index}>
+                <div>
+                  <h3>{item.title}</h3>
+                  <p>{item.description}</p>
+                  <p> <i>Completed at: {item.completedOn}</i></p>
+                </div>
+                <div>
+                  <AiOutlineDelete
+                    className="icon"
+                    onClick={() => handleCompletedTodoDelete (index)}
+                  />
+                </div>
+              </div>
+            ))}
+        </div>
+      </div>
     </div>
   );
 }
